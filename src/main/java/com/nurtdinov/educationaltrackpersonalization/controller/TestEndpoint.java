@@ -21,11 +21,6 @@ public class TestEndpoint {
         return new Model121(restTemplate.getForObject("https://random-word-api.herokuapp.com/word", ArrayList.class).get(0).toString());
     }
 
-    @PostMapping("/questionnaire")
-    public Model121 questionnaire(@RequestBody UserQuestionnaireData userQuestionnaireData) {
-        System.out.println("Name received: " + userQuestionnaireData.getName());
-        return new Model121(restTemplate.getForObject("https://random-word-api.herokuapp.com/word", ArrayList.class).get(0).toString());
-    }
 
     @Data
     @AllArgsConstructor
