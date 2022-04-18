@@ -3,6 +3,7 @@ package com.nurtdinov.educationaltrackpersonalization.controller;
 import com.nurtdinov.educationaltrackpersonalization.entity.User;
 import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,9 +27,9 @@ public class QuestionnaireEndpoint {
         System.out.println("Name received: " + userQuestionnaireData.getName());
         User user = new User();
         user.setUsername(userQuestionnaireData.getName());
-
+        SecurityContextHolder.getContext();
         userRepository.save(user);
 
-        return new TestEndpoint.Model121(restTemplate.getForObject("https://random-word-api.herokuapp.com/word", ArrayList.class).get(0).toString() + user.getId());
+        return new TestEndpoint.Model121(restTemplate.getForObject("https://random-word-api.herokuapp.com/word", ArrayList.class).get(0).toString() + user.getUsername());
     }
 }

@@ -3,22 +3,18 @@ package com.nurtdinov.educationaltrackpersonalization.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.common.aliasing.qual.Unique;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "learner_user")
 public class User {
-    @Id
-    @GeneratedValue
-    private Long id;
+    public User(String username) {
+        this.username = username;
+    }
 
-    String username;
-    String password;
+    @Id String username;
 }
