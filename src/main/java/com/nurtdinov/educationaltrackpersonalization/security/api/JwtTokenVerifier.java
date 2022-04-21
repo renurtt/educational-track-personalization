@@ -38,6 +38,7 @@ import com.nurtdinov.educationaltrackpersonalization.security.jwt.JwtConfig;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.security.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -77,7 +78,10 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
                     .collect(Collectors.toSet());
             Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, simpleGrantedAuthoritySet);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
+//            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//
+//            if (principal instanceof UserDetails) {
+//              String username = ((UserDetails)principal).getUsername();
             MyHttpServletRequestWrapper wrappedRequest = new MyHttpServletRequestWrapper(request);
             wrappedRequest.addHeader("Username", getRequesterUsername(authorizationHeader));
             request = wrappedRequest;

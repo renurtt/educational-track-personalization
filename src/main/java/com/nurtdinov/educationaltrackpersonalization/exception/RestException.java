@@ -1,4 +1,4 @@
-package com.nurtdinov.educationaltrackpersonalization.security.exception;
+package com.nurtdinov.educationaltrackpersonalization.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

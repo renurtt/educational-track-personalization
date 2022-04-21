@@ -2,6 +2,7 @@ package com.nurtdinov.educationaltrackpersonalization.security.config;
 
 import javax.crypto.SecretKey;
 
+import com.nurtdinov.educationaltrackpersonalization.exception.ExceptionHandlerFilter;
 import com.nurtdinov.educationaltrackpersonalization.security.api.JwtAuthenticationFilter;
 import com.nurtdinov.educationaltrackpersonalization.security.jwt.JwtConfig;
 import com.nurtdinov.educationaltrackpersonalization.security.api.JwtTokenVerifier;
@@ -38,7 +39,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-//                    .addFilterBefore(new ExceptionHandlerFilter(), JwtAuthenticationFilter.class)
+                    .addFilterBefore(new ExceptionHandlerFilter(), JwtAuthenticationFilter.class)
                     .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
                     .addFilterAfter(new JwtTokenVerifier(jwtConfig, secretKey), JwtAuthenticationFilter.class)
                 .authorizeRequests()

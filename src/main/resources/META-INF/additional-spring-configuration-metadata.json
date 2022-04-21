@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "application.db.parse-and-insert-data",
+      "type": "java.lang.Boolean",
+      "description": "Description for application.db.parse-and-insert-data."
+    },
+    {
+      "name": "application.db.parse-and-insert-data.override-users",
+      "type": "java.lang.Boolean",
+      "description": "Description for application.db.parse-and-insert-data.override-users."
+    }
+  ] }
