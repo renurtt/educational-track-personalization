@@ -78,10 +78,7 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
                     .collect(Collectors.toSet());
             Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, simpleGrantedAuthoritySet);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-//            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//
-//            if (principal instanceof UserDetails) {
-//              String username = ((UserDetails)principal).getUsername();
+
             MyHttpServletRequestWrapper wrappedRequest = new MyHttpServletRequestWrapper(request);
             wrappedRequest.addHeader("Username", getRequesterUsername(authorizationHeader));
             request = wrappedRequest;

@@ -1,6 +1,7 @@
 package com.nurtdinov.educationaltrackpersonalization.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @Table(name = "learner_user")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User implements Serializable {
     public User(String username) {
         this.username = username;
@@ -23,6 +25,8 @@ public class User implements Serializable {
 
     @Id
     String username;
+
+    String fullName;
 
     @Unique
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_sequence")
@@ -65,6 +69,7 @@ public class User implements Serializable {
     @JsonIgnore
     String articlesReadCsv;
 
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_article",
             joinColumns = @JoinColumn(

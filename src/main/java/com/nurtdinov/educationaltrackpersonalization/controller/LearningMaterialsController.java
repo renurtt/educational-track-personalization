@@ -1,6 +1,7 @@
 package com.nurtdinov.educationaltrackpersonalization.controller;
 
 import com.google.common.collect.Lists;
+import com.nurtdinov.educationaltrackpersonalization.dto.ArticleDTO;
 import com.nurtdinov.educationaltrackpersonalization.entity.Article;
 import com.nurtdinov.educationaltrackpersonalization.entity.Course;
 import com.nurtdinov.educationaltrackpersonalization.entity.Job;
@@ -11,16 +12,18 @@ import com.nurtdinov.educationaltrackpersonalization.repository.CourseRepository
 import com.nurtdinov.educationaltrackpersonalization.repository.JobRepository;
 import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import java.security.Principal;
+import java.util.*;
 
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class LearningMaterialsController {
 
     private final CourseRepository courseRepository;
@@ -59,27 +62,54 @@ public class LearningMaterialsController {
     }
 
     @GetMapping("article/list")
-    public List<Article> getArticleList() {
-        return Lists.newArrayList(articleRepository.findAll());
+    public List<ArticleDTO> getArticleList(Principal userRequester) {
+        ArrayList<Article> articles = Lists.newArrayList(articleRepository.findAll());
+
+        Set<Article> readArticles = retrieveReadArticles(userRequester);
+        List<ArticleDTO> response = new ArrayList<ArticleDTO>();
+
+        for (Article article : articles) {
+            response.add(mapArticleToDto(article, readArticles));
+        }
+
+        return response;
     }
 
     @GetMapping("article/{id}")
-    public Article getArticleById(@PathVariable Long id) {
-        Optional<Article> article = articleRepository.findById(id);
-        if (article.isEmpty()) {
+    public ArticleDTO getArticleById(Principal userRequester, @PathVariable Long id) {
+        log.info("GET /article/" + id);
+        Optional<Article> articleOptional = articleRepository.findById(id);
+        if (articleOptional.isEmpty()) {
             throw new EntityNotFoundException("Nothing found with provided id.");
-
         }
-        return article.get();
+        Article article = articleOptional.get();
+
+        Set<Article> readArticles = retrieveReadArticles(userRequester);
+        ArticleDTO articleDTO = mapArticleToDto(article, readArticles);;
+
+        return articleDTO;
     }
 
-    @GetMapping("user/{id}")
-    public User getUserById(@PathVariable String username) {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new EntityNotFoundException("Nothing found with provided id.");
+    private Set<Article> retrieveReadArticles(Principal userRequester) {
+        Set<Article> readArticles = new HashSet<>();
 
+        if (userRequester != null) {
+            User user = userRepository.findByUsername(userRequester.getName());
+            readArticles = user.getArticlesRead();
         }
-        return user;
+        return readArticles;
+    }
+
+    private ArticleDTO mapArticleToDto(Article article, Set<Article> readArticles) {
+        ArticleDTO articleDTO = new ArticleDTO();
+        articleDTO.setCategory(article.getCategory());
+        articleDTO.setDate(article.getDate());
+        articleDTO.setDescription(article.getDescription());
+        articleDTO.setId(article.getId());
+        articleDTO.setContent(article.getContent());
+        articleDTO.setTags(article.getTags());
+        articleDTO.setTitle(article.getTitle());
+        articleDTO.setRead(readArticles.contains(article));
+        return articleDTO;
     }
 }
