@@ -3,6 +3,7 @@ package com.nurtdinov.educationaltrackpersonalization.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Persistent;
 
@@ -14,11 +15,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @Table(name = "article")
-public class Article {
-    @CsvBindByName(column = "ID")
-    @Id
-    Long id;
-
+@EqualsAndHashCode(callSuper = true)
+public class Article extends LearningMaterial {
     @CsvBindByName(column = "Название")
     @Column(length = 10000)
     String title;

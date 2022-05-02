@@ -1,6 +1,7 @@
 package com.nurtdinov.educationaltrackpersonalization.controller;
 
 import com.nurtdinov.educationaltrackpersonalization.entity.Article;
+import com.nurtdinov.educationaltrackpersonalization.entity.LearningMaterial;
 import com.nurtdinov.educationaltrackpersonalization.entity.User;
 import com.nurtdinov.educationaltrackpersonalization.exception.EntityNotFoundException;
 import com.nurtdinov.educationaltrackpersonalization.exception.RestException;

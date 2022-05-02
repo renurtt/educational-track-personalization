@@ -48,37 +48,52 @@ public class DataPrefill implements ApplicationRunner {
     private final UserRepository userRepository;
     private final ApplicationUserService applicationUserService;
 
-
     @Value("${application.db.parse-and-insert-data.override-users}")
     private boolean overrideUsers;
+
+    private static final boolean updateCoursesToggle;
+    private static final boolean updateJobsToggle;
+    private static final boolean updateArticlesToggle;
+
+    static {
+        updateCoursesToggle = true;
+        updateJobsToggle = true;
+        updateArticlesToggle = true;
+    }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
         log.info("Data prefill is about to start");
 
-        List<Course> courses = readEntitiesFromCsv("courses.csv", Course.class);
-        if (!CollectionUtils.isEmpty(courses)) {
-            log.info("Overriding courses");
-            courseRepository.deleteAll();
-            courseRepository.saveAll(courses);
+        if (updateCoursesToggle) {
+            List<Course> courses = readEntitiesFromCsv("courses.csv", Course.class);
+            if (!CollectionUtils.isEmpty(courses)) {
+                log.info("Overriding courses");
+                courseRepository.deleteAll();
+                courseRepository.saveAll(courses);
+            }
         }
 
-        List<Job> jobs = readEntitiesFromCsv("jobs.csv", Job.class);
-        if (!CollectionUtils.isEmpty(jobs)) {
-            log.info("Overriding jobs");
-            jobRepository.deleteAll();
-            jobRepository.saveAll(jobs);
+        if (updateJobsToggle) {
+            List<Job> jobs = readEntitiesFromCsv("jobs.csv", Job.class);
+            if (!CollectionUtils.isEmpty(jobs)) {
+                log.info("Overriding jobs");
+                jobRepository.deleteAll();
+                jobRepository.saveAll(jobs);
+            }
         }
 
-        List<Article> articles = readEntitiesFromCsv("articles.csv", Article.class);
-        if (!CollectionUtils.isEmpty(articles)) {
-            log.info("Overriding articles");
-            articles = articles.stream()
-                    .peek(article -> article.setDate(tryParseDate(article.getDateCsv())))
-                    .collect(Collectors.toList());
+        if (updateArticlesToggle) {
+            List<Article> articles = readEntitiesFromCsv("articles.csv", Article.class);
+            if (!CollectionUtils.isEmpty(articles)) {
+                log.info("Overriding articles");
+                articles = articles.stream()
+                        .peek(article -> article.setDate(tryParseDate(article.getDateCsv())))
+                        .collect(Collectors.toList());
 
-            articleRepository.deleteAll();
-            articleRepository.saveAll(articles);
+                articleRepository.deleteAll();
+                articleRepository.saveAll(articles);
+            }
         }
 
         if (overrideUsers) {

@@ -13,11 +13,7 @@ import javax.persistence.Table;
 @Data
 @NoArgsConstructor
 @Table(name = "job")
-public class Job {
-    @CsvBindByName(column = "ID")
-    @Id
-    Long id;
-
+public class Job extends LearningMaterial {
     @CsvBindByName(column = "Название")
     @Column(length=10000)
     String title;
