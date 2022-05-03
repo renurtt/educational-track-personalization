@@ -1,13 +1,8 @@
 package com.nurtdinov.educationaltrackpersonalization;
 
-import com.nurtdinov.educationaltrackpersonalization.entity.Article;
-import com.nurtdinov.educationaltrackpersonalization.entity.Course;
-import com.nurtdinov.educationaltrackpersonalization.entity.Job;
-import com.nurtdinov.educationaltrackpersonalization.entity.User;
-import com.nurtdinov.educationaltrackpersonalization.repository.ArticleRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.CourseRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.JobRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
+import com.nurtdinov.educationaltrackpersonalization.dto.FavoriteCsv;
+import com.nurtdinov.educationaltrackpersonalization.entity.*;
+import com.nurtdinov.educationaltrackpersonalization.repository.*;
 import com.nurtdinov.educationaltrackpersonalization.security.ApplicationUserRole;
 import com.nurtdinov.educationaltrackpersonalization.security.dto.RegistrationRequest;
 import com.nurtdinov.educationaltrackpersonalization.security.service.ApplicationUserService;
@@ -17,11 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -44,6 +41,7 @@ public class DataPrefill implements ApplicationRunner {
 
     private final CourseRepository courseRepository;
     private final JobRepository jobRepository;
+    private final LearningMaterialRepository learningMaterialRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
     private final ApplicationUserService applicationUserService;
@@ -54,11 +52,13 @@ public class DataPrefill implements ApplicationRunner {
     private static final boolean updateCoursesToggle;
     private static final boolean updateJobsToggle;
     private static final boolean updateArticlesToggle;
+    private static final boolean updateFavoriteToggle;
 
     static {
-        updateCoursesToggle = true;
-        updateJobsToggle = true;
-        updateArticlesToggle = true;
+        updateCoursesToggle = false;
+        updateJobsToggle = false;
+        updateArticlesToggle = false;
+        updateFavoriteToggle = false;
     }
 
     @Override
@@ -131,6 +131,36 @@ public class DataPrefill implements ApplicationRunner {
                         users) {
                     applicationUserService.doRegister(new RegistrationRequest(user.getUsername(), "123"),
                             Collections.singleton(ApplicationUserRole.USER));
+                }
+            }
+        }
+
+        if (updateFavoriteToggle) {
+            List<FavoriteCsv> favorites = readEntitiesFromCsv("user_favorites.csv", FavoriteCsv.class);
+            if (!CollectionUtils.isEmpty(favorites)) {
+                log.info("Overriding favorites");
+
+                for (FavoriteCsv favorite : favorites) {
+                    if (!StringUtils.hasText(favorite.getUserId())) {
+                        continue;
+                    }
+                    User user = userRepository.findUserByExternalId(Long.parseLong(favorite.getUserId().substring(0, favorite.getUserId().length() - 2)));
+                    if (!StringUtils.hasText(favorite.getMaterial())) {
+                        continue;
+                    }
+                    Long materialId = Long.parseLong(
+                            favorite.getMaterial().substring(
+                                    favorite.getMaterial().lastIndexOf('[') + 1,
+                                    favorite.getMaterial().lastIndexOf(']')
+                            )
+                    );
+                    if (!learningMaterialRepository.existsById(materialId) || user == null) {
+                        continue;
+                    }
+                    try {
+                        learningMaterialRepository.addLike(materialId, user.getUsername());
+                    } catch (DataIntegrityViolationException ignored) {
+                    }
                 }
             }
         }

@@ -2,20 +2,14 @@ package com.nurtdinov.educationaltrackpersonalization.controller;
 
 import com.google.common.collect.Lists;
 import com.nurtdinov.educationaltrackpersonalization.dto.ArticleDTO;
-import com.nurtdinov.educationaltrackpersonalization.entity.Article;
-import com.nurtdinov.educationaltrackpersonalization.entity.Course;
-import com.nurtdinov.educationaltrackpersonalization.entity.Job;
-import com.nurtdinov.educationaltrackpersonalization.entity.User;
+import com.nurtdinov.educationaltrackpersonalization.entity.*;
 import com.nurtdinov.educationaltrackpersonalization.exception.EntityNotFoundException;
-import com.nurtdinov.educationaltrackpersonalization.repository.ArticleRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.CourseRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.JobRepository;
-import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
+import com.nurtdinov.educationaltrackpersonalization.exception.RestException;
+import com.nurtdinov.educationaltrackpersonalization.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.*;
@@ -30,6 +24,7 @@ public class LearningMaterialsController {
     private final JobRepository jobRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
+    private final LearningMaterialRepository learningMaterialRepository;
 
     @GetMapping("course/list")
     public List<Course> getCourseList() {
@@ -65,7 +60,12 @@ public class LearningMaterialsController {
     public List<ArticleDTO> getArticleList(Principal userRequester) {
         ArrayList<Article> articles = Lists.newArrayList(articleRepository.findAll());
 
-        Set<Article> readArticles = retrieveReadArticles(userRequester);
+        Set<Article> readArticles = new HashSet<>();
+        if (userRequester != null) {
+            User user = userRepository.findByUsername(userRequester.getName());
+            readArticles = user.getArticlesRead();
+        }
+
         List<ArticleDTO> response = new ArrayList<ArticleDTO>();
 
         for (Article article : articles) {
@@ -84,20 +84,43 @@ public class LearningMaterialsController {
         }
         Article article = articleOptional.get();
 
-        Set<Article> readArticles = retrieveReadArticles(userRequester);
-        ArticleDTO articleDTO = mapArticleToDto(article, readArticles);;
+        Set<Article> readArticles = new HashSet<>();
+        if (userRequester != null) {
+            User user = userRepository.findByUsername(userRequester.getName());
+            readArticles = user.getArticlesRead();
+            article.setLiked(article.getLikedUsers().contains(user));
+        }
+
+        ArticleDTO articleDTO = mapArticleToDto(article, readArticles);
 
         return articleDTO;
     }
 
-    private Set<Article> retrieveReadArticles(Principal userRequester) {
-        Set<Article> readArticles = new HashSet<>();
+    @PostMapping("/material/addLike")
+    public void addLike(Principal userRequester, @RequestBody LearningMaterial learningMaterialRequest) {
+        log.info("POST /material/addLike");
 
-        if (userRequester != null) {
-            User user = userRepository.findByUsername(userRequester.getName());
-            readArticles = user.getArticlesRead();
+        User user = userRepository.findByUsername(userRequester.getName());
+
+        if (learningMaterialRequest == null || learningMaterialRequest.getId() == null) {
+            throw new RestException(HttpStatus.BAD_REQUEST, "Material id turned out to be null.");
         }
-        return readArticles;
+
+        learningMaterialRepository.addLike(learningMaterialRequest.getId(), user.getUsername());
+    }
+
+    @PostMapping("/material/removeLike")
+    public void removeLike(Principal userRequester, @RequestBody LearningMaterial learningMaterialRequest) {
+        log.info("POST /material/removeLike");
+
+        User user = userRepository.findByUsername(userRequester.getName());
+
+        if (learningMaterialRequest == null || learningMaterialRequest.getId() == null) {
+            throw new RestException(HttpStatus.BAD_REQUEST, "Material id turned out to be null.");
+        }
+
+        learningMaterialRepository.removeLike(learningMaterialRequest.getId(), user.getUsername());
+
     }
 
     private ArticleDTO mapArticleToDto(Article article, Set<Article> readArticles) {
@@ -109,6 +132,7 @@ public class LearningMaterialsController {
         articleDTO.setContent(article.getContent());
         articleDTO.setTags(article.getTags());
         articleDTO.setTitle(article.getTitle());
+        articleDTO.setLiked(article.getLiked());
         articleDTO.setRead(readArticles.contains(article));
         return articleDTO;
     }

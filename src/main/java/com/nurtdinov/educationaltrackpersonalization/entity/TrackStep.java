@@ -1,7 +1,10 @@
 package com.nurtdinov.educationaltrackpersonalization.entity;
 
 import com.opencsv.bean.CsvBindByName;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import javax.persistence.*;
@@ -9,6 +12,8 @@ import javax.persistence.*;
 @Entity
 @Data
 @Table(name = "track_step")
+@AllArgsConstructor
+@NoArgsConstructor
 public class TrackStep {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "track_step_id_sequence")
