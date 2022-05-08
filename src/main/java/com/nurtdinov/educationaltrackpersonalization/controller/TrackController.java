@@ -1,5 +1,6 @@
 package com.nurtdinov.educationaltrackpersonalization.controller;
 
+import com.nurtdinov.educationaltrackpersonalization.dto.UserMaterialLike;
 import com.nurtdinov.educationaltrackpersonalization.entity.LearningMaterial;
 import com.nurtdinov.educationaltrackpersonalization.entity.Track;
 import com.nurtdinov.educationaltrackpersonalization.entity.TrackStep;
@@ -8,8 +9,14 @@ import com.nurtdinov.educationaltrackpersonalization.exception.RestException;
 import com.nurtdinov.educationaltrackpersonalization.repository.LearningMaterialRepository;
 import com.nurtdinov.educationaltrackpersonalization.repository.TrackRepository;
 import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
+import com.nurtdinov.educationaltrackpersonalization.service.RecommendationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
+import org.apache.mahout.cf.taste.impl.model.BooleanPreference;
+import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
+import org.apache.mahout.cf.taste.model.Preference;
+import org.apache.mahout.cf.taste.model.PreferenceArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +25,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
+import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
+import org.apache.mahout.cf.taste.impl.similarity.CityBlockSimilarity;
+import org.apache.mahout.cf.taste.neighborhood.UserNeighborhood;
+import org.apache.mahout.cf.taste.recommender.UserBasedRecommender;
+import org.apache.mahout.cf.taste.recommender.RecommendedItem;
+
+import javax.annotation.Nullable;
 
 @RestController
 @RequestMapping("/track")
@@ -34,6 +49,9 @@ public class TrackController {
 
     @Autowired
     LearningMaterialRepository learningMaterialRepository;
+
+    @Autowired
+    RecommendationService recommendationService;
 
     @GetMapping("/latest")
     public Track getLatest(Principal userRequester) {
@@ -51,21 +69,10 @@ public class TrackController {
         log.info("POST track/generate/");
         User user = userRepository.findByUsername(userRequester.getName());
 
-        List<LearningMaterial> materials = (List<LearningMaterial>) learningMaterialRepository.findAll();
+        Track track;
 
-        Track track = new Track();
-        track.setDestination(user.getDesiredPosition());
-        track.setUser(user);
-        track.setCreationDate(new Date());
-        track.setTrackSteps(new ArrayList<>());
-        for (int i = 0; i < RandomUtils.nextInt(2, 6); i++) {
-            track.getTrackSteps().add(
-                    new TrackStep(null,
-                            (long) RandomUtils.nextInt(0, 10),
-                            false,
-                            materials.get(RandomUtils.nextInt(0, materials.size())))
-            );
-        }
+        track = recommendationService.generateTrack(user);
+
         trackRepository.save(track);
     }
 }

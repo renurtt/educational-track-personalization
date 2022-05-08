@@ -9,5 +9,15 @@
       "name": "application.db.parse-and-insert-data.override-users",
       "type": "java.lang.Boolean",
       "description": "Description for application.db.parse-and-insert-data.override-users."
+    },
+    {
+      "name": "application.recommender.recommenderModelHost",
+      "type": "java.lang.String",
+      "description": "Description for application.recommender.recommenderModelHost."
+    },
+    {
+      "name": "application.recommender.similarUsersEndpoint",
+      "type": "java.lang.String",
+      "description": "Description for application.recommender.similarUsersEndpoint."
     }
   ] }

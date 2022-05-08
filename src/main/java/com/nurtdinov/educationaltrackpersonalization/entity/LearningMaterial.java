@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -46,4 +48,8 @@ public class LearningMaterial {
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<User> likedUsers = new HashSet<>();
+
+    public LearningMaterial(Long id) {
+        this.id = id;
+    }
 }
