@@ -34,6 +34,12 @@ public class LearningMaterial {
     @Transient
     Boolean liked;
 
+    @Transient
+    String title;
+
+    @Transient
+    String description;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_material_like",
             joinColumns = @JoinColumn(

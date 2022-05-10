@@ -2,24 +2,32 @@ package com.nurtdinov.educationaltrackpersonalization.service;
 
 import com.nurtdinov.educationaltrackpersonalization.entity.User;
 import com.nurtdinov.educationaltrackpersonalization.entity.UserSkill;
+import com.nurtdinov.educationaltrackpersonalization.exception.EmptyDesiredPostionException;
+import com.nurtdinov.educationaltrackpersonalization.exception.EntityNotFoundException;
+import com.nurtdinov.educationaltrackpersonalization.exception.NoSkillsException;
+import com.nurtdinov.educationaltrackpersonalization.repository.UserRepository;
 import com.nurtdinov.educationaltrackpersonalization.repository.UserSkillRepository;
-import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.SimilarUsersInSkillSetRequest;
-import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.SimilarUsersInSkillSetResponse;
+import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.SimilarUsersRequest;
+import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.SimilarUsersResponse;
 import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.UserSimilarityDto;
 import com.nurtdinov.educationaltrackpersonalization.service.rest.interactions.dto.UserRecommendationProfileDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
 @Service
+@Slf4j
 public class SimilarUsersClient {
 
     private static final String SKILL_LEVEL_DELIMITER = "_";
-    public static final double SKILL_SIMILARITY_THRESHOLD = 0.1;
+    private static final double SKILL_SIMILARITY_THRESHOLD = 0.1;
+    private static final double DESIRED_POSITION_THRESHOLD = 0.3;
 
     @Value("${application.recommender.recommenderModelHost}")
     private String recommenderModelHost;
@@ -27,9 +35,14 @@ public class SimilarUsersClient {
     @Value("${application.recommender.similarUsersInSkillsEndpoint}")
     private String similarUsersInSkillsEndpoint;
 
+    @Value("${application.recommender.similarUsersInDesiredPositionEndpoint}")
+    private String similarUsersInDesiredPositionEndpoint;
+
     @Autowired
     UserSkillRepository userSkillRepository;
 
+    @Autowired
+    UserRepository userRepository;
 
     RestTemplate restTemplate = new RestTemplate();
 
@@ -40,20 +53,65 @@ public class SimilarUsersClient {
      */
     public List<UserSimilarityDto> requestSimilarUsersInSkill(User userRequester) {
         String url = "http://" + recommenderModelHost + "/" + similarUsersInSkillsEndpoint;
-        SimilarUsersInSkillSetRequest request = buildRequest(userRequester);
+        SimilarUsersRequest request = null;
+        try {
+            request = buildSimilarUsersInSkillRequest(userRequester);
+        }
+        catch (NoSkillsException e) {
+            log.error("Unable to request similar users in skill");
+            return Collections.emptyList();
+        }
 
-        SimilarUsersInSkillSetResponse similarUsersInSkillSetResponse =
-                restTemplate.postForEntity(url, request, SimilarUsersInSkillSetResponse.class).getBody();
-        if (similarUsersInSkillSetResponse == null || CollectionUtils.isEmpty(similarUsersInSkillSetResponse.getSimilarUsers())) {
+        SimilarUsersResponse similarUsersResponse =
+                restTemplate.postForEntity(url, request, SimilarUsersResponse.class).getBody();
+        if (similarUsersResponse == null || CollectionUtils.isEmpty(similarUsersResponse.getSimilarUsers())) {
             return null;
         }
-        return similarUsersInSkillSetResponse.getSimilarUsers();
+        return similarUsersResponse.getSimilarUsers();
     }
 
-    private SimilarUsersInSkillSetRequest buildRequest(User userRequester) {
-        SimilarUsersInSkillSetRequest request = new SimilarUsersInSkillSetRequest();
+    public List<UserSimilarityDto> requestSimilarUsersInDesiredPosition(User userRequester) {
+        String url = "http://" + recommenderModelHost + "/" + similarUsersInDesiredPositionEndpoint;
+        SimilarUsersRequest request = null;
+        try {
+            request = buildSimilarUsersInDesiredPositionRequest(userRequester);
+        }
+        catch (EmptyDesiredPostionException e) {
+            log.error("Unable to request similar users in desired position");
+            return Collections.emptyList();
+        }
+        SimilarUsersResponse similarUsersResponse =
+                restTemplate.postForEntity(url, request, SimilarUsersResponse.class).getBody();
+        if (similarUsersResponse == null || CollectionUtils.isEmpty(similarUsersResponse.getSimilarUsers())) {
+            return null;
+        }
+        return similarUsersResponse.getSimilarUsers();
+    }
+
+    private SimilarUsersRequest buildSimilarUsersInDesiredPositionRequest(User userRequester) {
+        if (!StringUtils.hasText(userRequester.getDesiredPosition())) {
+            throw new EmptyDesiredPostionException();
+        }
+        SimilarUsersRequest request = new SimilarUsersRequest();
+        request.setThreshold(DESIRED_POSITION_THRESHOLD);
+
+        request.setTargetUser(new UserRecommendationProfileDto(userRequester.getUsername(), userRequester.getExternalId(),
+                null, userRequester.getDesiredPosition()));
+
+        List<UserRecommendationProfileDto> otherUsersWithDesiredPosition = userRepository.findAllByUsernameNotInAndDesiredPositionIsNotNull(
+                Collections.singletonList(userRequester.getUsername()));
+
+        request.setOtherUsers(otherUsersWithDesiredPosition);
+        return request;
+    }
+
+    private SimilarUsersRequest buildSimilarUsersInSkillRequest(User userRequester) {
+        SimilarUsersRequest request = new SimilarUsersRequest();
         request.setThreshold(SKILL_SIMILARITY_THRESHOLD);
         List<UserSkill> targetUserSkillSet = userSkillRepository.findAllByUserUsername(userRequester.getUsername());
+        if (CollectionUtils.isEmpty(targetUserSkillSet)) {
+            throw new NoSkillsException();
+        }
         String targetUserSkillSetString = buildStringSkillSet(SKILL_LEVEL_DELIMITER, targetUserSkillSet);
 
         request.setTargetUser(new UserRecommendationProfileDto(userRequester.getUsername(), userRequester.getExternalId(),
@@ -72,7 +130,7 @@ public class SimilarUsersClient {
             userToSkillList.get(otherUserSkill.getUser()).add(otherUserSkill);
         }
 
-        // Other users skills. Step 2. Turn skill set into a string. Pack up into list of (User, skills string)
+        // Other users skills. Step 3. Turn skill set into a string. Pack up into list of (User, skills string)
         List<UserRecommendationProfileDto> otherUserSkillsDto = new ArrayList<>();
         for (Map.Entry<User, List<UserSkill>> otherUserSkillsListEntry : userToSkillList.entrySet()) {
             otherUserSkillsDto.add(new UserRecommendationProfileDto(

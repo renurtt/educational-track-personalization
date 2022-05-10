@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class SimilarUsersInSkillSetResponse {
+public class SimilarUsersResponse {
     List<UserSimilarityDto> similarUsers;
 }
 

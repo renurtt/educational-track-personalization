@@ -12,4 +12,10 @@ public class UserRecommendationProfileDto {
     Long externalId;
     String skillSet;
     String desiredPosition;
+
+    public UserRecommendationProfileDto(String username, Long externalId, String desiredPosition) {
+        this.username = username;
+        this.externalId = externalId;
+        this.desiredPosition = desiredPosition;
+    }
 }
