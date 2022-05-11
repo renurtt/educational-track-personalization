@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -111,14 +110,14 @@ public class DataPrefill implements ApplicationRunner {
                                     user.setUsername(RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(3, 11)));
 
                                     if (StringUtils.hasText(user.getArticlesReadCsv())) {
-                                        Set<Article> articlesRead = new HashSet<>();
+                                        Set<LearningMaterial> articlesRead = new HashSet<>();
                                         for (String articleTitle : user.getArticlesReadCsv().split("\n")) {
                                             Article article = articleRepository.findFirstByTitleContains(articleTitle.strip());
                                             if (article != null) {
                                                 articlesRead.add(article);
                                             }
                                         }
-                                        user.setArticlesRead(articlesRead);
+                                        user.setMaterialsCompleted(articlesRead);
                                     }
                                 }
                         )

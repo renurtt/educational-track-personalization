@@ -71,16 +71,16 @@ public class User implements Serializable {
 
     @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_article",
+    @JoinTable(name = "user_material_completed",
             joinColumns = @JoinColumn(
                     name = "user_external_id",
                     referencedColumnName = "external_id"
             ),
             inverseJoinColumns = @JoinColumn(
-                    name = "article_id",
+                    name = "material_id",
                     referencedColumnName = "id"
             )
     )
-    private Set<Article> articlesRead = new HashSet<>();
+    private Set<LearningMaterial> materialsCompleted = new HashSet<>();
 
 }

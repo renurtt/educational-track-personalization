@@ -32,13 +32,18 @@ public class LearningMaterialsController {
     }
 
     @GetMapping("course/{id}")
-    public Course getCourseById(@PathVariable Long id) {
-        Optional<Course> course = courseRepository.findById(id);
-        if (course.isEmpty()) {
+    public Course getCourseById(Principal userRequester, @PathVariable Long id) {
+        Optional<Course> courseOptional = courseRepository.findById(id);
+        if (courseOptional.isEmpty()) {
             throw new EntityNotFoundException("Nothing found with provided id.");
-
         }
-        return course.get();
+        Course course = courseOptional.get();
+        if (userRequester != null) {
+            User user = userRepository.findByUsername(userRequester.getName());
+            course.setLiked(course.getLikedUsers().contains(user));
+            course.setCompleted(user.getMaterialsCompleted().contains(course));
+        }
+        return course;
     }
 
     @GetMapping("job/list")
@@ -47,23 +52,28 @@ public class LearningMaterialsController {
     }
 
     @GetMapping("job/{id}")
-    public Job getJobById(@PathVariable Long id) {
-        Optional<Job> job = jobRepository.findById(id);
-        if (job.isEmpty()) {
+    public Job getJobById(Principal userRequester, @PathVariable Long id) {
+        Optional<Job> jobOptional = jobRepository.findById(id);
+        if (jobOptional.isEmpty()) {
             throw new EntityNotFoundException("Nothing found with provided id.");
-
         }
-        return job.get();
+        Job job = jobOptional.get();
+        if (userRequester != null) {
+            User user = userRepository.findByUsername(userRequester.getName());
+            job.setLiked(job.getLikedUsers().contains(user));
+            job.setCompleted(user.getMaterialsCompleted().contains(job));
+        }
+        return job;
     }
 
     @GetMapping("article/list")
     public List<ArticleDTO> getArticleList(Principal userRequester) {
         ArrayList<Article> articles = Lists.newArrayList(articleRepository.findAll());
 
-        Set<Article> readArticles = new HashSet<>();
+        Set<LearningMaterial> readArticles = new HashSet<>();
         if (userRequester != null) {
             User user = userRepository.findByUsername(userRequester.getName());
-            readArticles = user.getArticlesRead();
+            readArticles = user.getMaterialsCompleted();
         }
 
         List<ArticleDTO> response = new ArrayList<ArticleDTO>();
@@ -84,10 +94,10 @@ public class LearningMaterialsController {
         }
         Article article = articleOptional.get();
 
-        Set<Article> readArticles = new HashSet<>();
+        Set<LearningMaterial> readArticles = new HashSet<>();
         if (userRequester != null) {
             User user = userRepository.findByUsername(userRequester.getName());
-            readArticles = user.getArticlesRead();
+            readArticles = user.getMaterialsCompleted();
             article.setLiked(article.getLikedUsers().contains(user));
         }
 
@@ -123,7 +133,7 @@ public class LearningMaterialsController {
 
     }
 
-    private ArticleDTO mapArticleToDto(Article article, Set<Article> readArticles) {
+    private ArticleDTO mapArticleToDto(Article article, Set<LearningMaterial> readArticles) {
         ArticleDTO articleDTO = new ArticleDTO();
         articleDTO.setCategory(article.getCategory());
         articleDTO.setDate(article.getDate());
@@ -133,7 +143,7 @@ public class LearningMaterialsController {
         articleDTO.setTags(article.getTags());
         articleDTO.setTitle(article.getTitle());
         articleDTO.setLiked(article.getLiked());
-        articleDTO.setRead(readArticles.contains(article));
+        articleDTO.setRead(readArticles.stream().anyMatch(x-> Objects.equals(x.getId(), article.getId())));
         return articleDTO;
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -73,22 +72,22 @@ public class UserController {
     }
 
     @GetMapping("/current/completedArticles")
-    public Set<Article> getCompletedArticles(Principal userRequester) {
+    public  Set<LearningMaterial> getCompletedArticles(Principal userRequester) {
         User user = userRepository.findByUsername(userRequester.getName());
 
-        Set<Article> articles = user.getArticlesRead();
+        Set<LearningMaterial> materials = user.getMaterialsCompleted();
 
-        return articles;
+        return materials;
     }
 
-    @PostMapping("/current/addArticle")
-    public void addArticle(Principal userRequester, @RequestBody Article article) {
+    @PostMapping("/current/addCompletedMaterial")
+    public void addArticle(Principal userRequester, @RequestBody LearningMaterial material) {
         User user = userRepository.findByUsername(userRequester.getName());
 
-        if (article == null || article.getId() == null) {
+        if (material == null || material.getId() == null) {
             throw new RestException(HttpStatus.BAD_REQUEST, "Article id turned out to be null.");
         }
-        user.getArticlesRead().add(article);
+        user.getMaterialsCompleted().add(material);
 
         userRepository.save(user);
     }

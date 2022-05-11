@@ -32,6 +32,7 @@ public class LearningMaterial {
     Long id;
 
     @Transient
+    @EqualsAndHashCode.Exclude
     Boolean liked;
 
     @Transient
@@ -39,6 +40,13 @@ public class LearningMaterial {
 
     @Transient
     String description;
+
+    /**
+     * The field is NOT being retrieved from DB. Compute it manually.
+     */
+    @Transient
+    @EqualsAndHashCode.Exclude
+    Boolean completed;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_material_like",
