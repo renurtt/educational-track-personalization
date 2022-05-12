@@ -68,7 +68,7 @@ public class LearningMaterialsController {
 
     @GetMapping("article/list")
     public List<ArticleDTO> getArticleList(Principal userRequester) {
-        ArrayList<Article> articles = Lists.newArrayList(articleRepository.findAll());
+        ArrayList<Article> articles = Lists.newArrayList(articleRepository.findAllByOrderByDateDesc());
 
         Set<LearningMaterial> readArticles = new HashSet<>();
         if (userRequester != null) {
