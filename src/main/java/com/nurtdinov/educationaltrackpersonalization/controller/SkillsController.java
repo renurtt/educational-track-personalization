@@ -52,7 +52,7 @@ public class SkillsController {
 
 
 
-    @PostMapping("/")
+    @PostMapping("/userSkillsList")
     public List<UserSkillDto> updateSkills(Principal userRequester, @RequestBody List<UserSkillDto> userSkillDtos) {
         if (userSkillDtos == null) {
             throw new RestException(HttpStatus.BAD_REQUEST, "");

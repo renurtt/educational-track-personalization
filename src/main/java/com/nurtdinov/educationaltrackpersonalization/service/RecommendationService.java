@@ -52,7 +52,7 @@ public class RecommendationService {
 
         List<UserSimilarityDto> usersSimilarInDesiredPosition = similarUsersClient.requestSimilarUsersInDesiredPosition(userRequester);
 
-        List<RecommendedItem> recommendedItemsOnUserSimilarity = buildRecommendationsForSimilarUsers(usersSimilarInSkills,
+        List<RecommendedItem> recommendedItemsOnUserSimilarity = buildRecommendationsOnUserSimilarity(usersSimilarInSkills,
                 usersSimilarInDesiredPosition, userRequester);
         // At this point recommendedItemsOnUserSimilarity CONTAINS recommendations for any or both similar users lists OR contains 0 items
         List<MaterialRecommendation> collaborativeFilteringRecommendations = mapRecommendedItemToMaterialRecommendation(recommendedItemsOnUserSimilarity);
@@ -106,9 +106,9 @@ public class RecommendationService {
      *
      * @return recommendations for any or both similar users lists OR  0 items
      */
-    private List<RecommendedItem> buildRecommendationsForSimilarUsers(List<UserSimilarityDto> usersSimilarInSkills,
-                                                                      List<UserSimilarityDto> usersSimilarInDesiredPosition,
-                                                                      User userRequester) {
+    private List<RecommendedItem> buildRecommendationsOnUserSimilarity(List<UserSimilarityDto> usersSimilarInSkills,
+                                                                       List<UserSimilarityDto> usersSimilarInDesiredPosition,
+                                                                       User userRequester) {
         List<RecommendedItem> recommendedItems = new ArrayList<>();
         List<UserSimilarityDto> similarUsers = new ArrayList<>();
         // Step 1. Check for emptiness of lists of both similarities
